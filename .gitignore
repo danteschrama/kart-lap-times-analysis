@@ -1,0 +1,13 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# Data
+data/raw/*
+data/processed/*
+
+# Environment files
+.env
+venv
+.ipynb_checkpoints
