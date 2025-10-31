@@ -12,36 +12,6 @@ from playwright.sync_api import sync_playwright
 from sqlalchemy import create_engine
 
 
-def get_date(date_str):
-    date_obj = datetime.strptime(date_str, "%A %d %B %Y")
-    formatted_date = date_obj.strftime("%Y-%m-%d")
-    return formatted_date
-
-
-def get_latest_heat(location):
-    server = "prd-opendata-sql-001.database.windows.net"
-    database = "opendata"
-    username = "AdminDev"
-    password = "OIt=C7+2.-).Z>n!wYf6"
-    driver = "{ODBC Driver 18 for SQL Server}"
-
-    connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}"
-
-    query = f"""
-    SELECT TOP 1 [heat_id], [sorting]
-    FROM [rp].[heats]
-    WHERE [location] = '{location}'
-    AND [date] = CONVERT(DATE, GETDATE())
-    ORDER BY [sorting] DESC;
-    """
-    with pyodbc.connect(connection_string) as conn:
-        latest_heat = pd.read_sql(query, conn)
-
-    if len(latest_heat) == 0:
-        latest_heat = pd.DataFrame({"heat_id": [np.nan], "sorting": [0]})
-    return latest_heat
-
-
 def main():
     for loc in ["delft", "amsterdam"]:
         print(loc)
@@ -156,30 +126,6 @@ def main():
             lap_times_df["position"] = lap_times_df.groupby(["heat_id", "lap"])[
                 "seconds"
             ].rank(method="min")
-
-        try:
-            server = "prd-opendata-sql-001.database.windows.net"
-            database = "opendata"
-            username = "AdminDev"
-            password = "OIt=C7+2.-).Z>n!wYf6"
-            driver = "{ODBC Driver 18 for SQL Server}"
-
-            # SQLAlchemy engine for SQL Server
-            connection_string = f"mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+18+for+SQL+Server"
-            engine = create_engine(connection_string)
-
-            heats_df.to_sql(
-                schema="rp", name="heats", con=engine, if_exists="append", index=False
-            )
-            lap_times_df.to_sql(
-                schema="rp",
-                name="lap_times",
-                con=engine,
-                if_exists="append",
-                index=False,
-            )
-        except Exception as e:
-            print(e)
 
 
 if __name__ == "__main__":
